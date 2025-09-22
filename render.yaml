@@ -1,0 +1,21 @@
+# Build command
+build: pip install -r requirements.txt
+
+# Start command  
+start: gunicorn app:app
+
+# Environment
+env: python
+
+# Instance type
+type: web
+
+# Port
+port: 10000
+
+# Environment variables
+envVars:
+  - key: FLASK_ENV
+    value: production
+  - key: PORT
+    value: 10000
