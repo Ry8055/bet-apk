@@ -13,12 +13,12 @@ database_url = os.environ.get('DATABASE_URL', 'sqlite:///betting_app.db')
 # For now, use SQLite to avoid PostgreSQL issues
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///betting_app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string-change-in-production')
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'fallback-jwt-secret-key-change-in-production-12345')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 
 # Initialize extensions
 db = SQLAlchemy(app)
-# jwt = JWTManager(app)  # Temporarily disabled for testing
+jwt = JWTManager(app)
 CORS(app, origins=['*'], allow_headers=['*'], methods=['*'], supports_credentials=True)
 
 # Database Models
