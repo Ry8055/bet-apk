@@ -8,10 +8,13 @@ import os
 
 # Flask app setup
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///betting_app.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///betting_app.db')
+if database_url.startswith('postgresql://'):
+    database_url = database_url.replace('postgresql://', 'postgresql+pg8000://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'jwt-secret-string-change-in-production'
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 
 # Initialize extensions
@@ -128,7 +131,7 @@ class MatkaBet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     market_id = db.Column(db.Integer, db.ForeignKey('matka_market.id'), nullable=False)
-    bet_type = db.Column(db.String(20), nullable=False)  # 'single', 'jodi', 'panna', 'sangam'
+    bet_type = db.Column(db.String(20), nullable=False)  # single, jodi, panna, sangam
     numbers = db.Column(db.String(100), nullable=False)  # "1,2,3" or "12,23,34"
     amount = db.Column(db.Float, nullable=False)
     rate = db.Column(db.Float, nullable=False)  # Payout rate (9.5 for single, 95 for jodi)
@@ -334,20 +337,7 @@ def get_matka_results(market_id):
         
         return jsonify({
             'results': [result.to_dict() for result in results]
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/matka/results', methods=['GET'])
-def get_matka_results_today():
-    try:
-        from datetime import date
-        today_results = MatkaResult.query.filter_by(date=date.today()).all()
-        
-        return jsonify({
-            'results': [result.to_dict() for result in today_results]
-        }), 200
+        }, 200)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -499,6 +489,11 @@ def get_profile():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Health check endpoint
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy', 'message': 'Betting API is running'}), 200
+
 @app.route('/api/matka/live-data', methods=['GET'])
 def get_live_data():
     try:
@@ -518,10 +513,18 @@ def get_live_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Health check endpoint
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    return jsonify({'status': 'healthy', 'message': 'Betting API is running'}), 200
+@app.route('/api/matka/results', methods=['GET'])
+def get_matka_results_today():
+    try:
+        from datetime import date
+        today_results = MatkaResult.query.filter_by(date=date.today()).all()
+        
+        return jsonify({
+            'results': [result.to_dict() for result in today_results]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     with app.app_context():
