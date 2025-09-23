@@ -19,7 +19,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 # Initialize extensions
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-CORS(app, origins=['*'], allow_headers=['*'], methods=['*'], supports_credentials=True)
+CORS(app, origins=['*'], allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], supports_credentials=True)
 
 # Database Models
 class User(db.Model):
