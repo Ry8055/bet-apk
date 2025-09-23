@@ -19,7 +19,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 # Initialize extensions
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-CORS(app)
+CORS(app, origins=['*'], allow_headers=['*'], methods=['*'], supports_credentials=True)
 
 # Database Models
 class User(db.Model):
@@ -253,7 +253,6 @@ def dashboard():
 
 # Matka API Routes
 @app.route('/api/matka/markets', methods=['GET'])
-@jwt_required()
 def get_matka_markets():
     try:
         markets = MatkaMarket.query.filter_by(is_active=True).all()
@@ -327,16 +326,43 @@ def place_matka_bet():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/matka/results/<int:market_id>', methods=['GET'])
-@jwt_required()
-def get_matka_results(market_id):
+@app.route('/api/matka/results', methods=['GET'])
+def get_matka_results():
     try:
-        # Get last 10 results for the market
-        results = MatkaResult.query.filter_by(market_id=market_id).order_by(MatkaResult.date.desc()).limit(10).all()
+        # Get today's results for all markets
+        from datetime import date
+        today_results = MatkaResult.query.filter_by(date=date.today()).all()
         
         return jsonify({
-            'results': [result.to_dict() for result in results]
-        }, 200)
+            'results': [result.to_dict() for result in today_results]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/matka/live-data', methods=['GET'])
+def get_matka_live_data():
+    try:
+        # Get all active markets with their current status
+        markets = MatkaMarket.query.filter_by(is_active=True).all()
+        
+        live_data = []
+        for market in markets:
+            # Get today's result if declared
+            from datetime import date
+            today_result = MatkaResult.query.filter_by(
+                market_id=market.id, 
+                date=date.today(),
+                is_declared=True
+            ).first()
+            
+            market_data = market.to_dict()
+            market_data['today_result'] = today_result.to_dict() if today_result else None
+            live_data.append(market_data)
+        
+        return jsonify({
+            'live_data': live_data
+        }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
