@@ -21,6 +21,10 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
 
+# Create database tables
+with app.app_context():
+    db.create_all()
+
 # Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
