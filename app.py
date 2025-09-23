@@ -21,10 +21,6 @@ db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
 
-# Create database tables
-with app.app_context():
-    db.create_all()
-
 # Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -497,37 +493,16 @@ def get_profile():
 def health_check():
     return jsonify({'status': 'healthy', 'message': 'Betting API is running'}), 200
 
-@app.route('/api/matka/live-data', methods=['GET'])
-def get_live_data():
-    try:
-        import random
-        live_data = {
-            'timestamp': datetime.now().isoformat(),
-            'totalBetsToday': random.randint(50000, 100000),
-            'activeBetting': random.randint(500, 1500),
-            'lastUpdate': datetime.now().isoformat(),
-            'hotMarkets': [
-                {'name': 'KALYAN', 'players': random.randint(2000, 3000), 'trend': 'up'},
-                {'name': 'MILAN NIGHT', 'players': random.randint(2500, 4000), 'trend': 'up'},
-                {'name': 'RAJDHANI NIGHT', 'players': random.randint(2000, 3500), 'trend': 'stable'}
-            ]
-        }
-        return jsonify(live_data), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/matka/results', methods=['GET'])
-def get_matka_results_today():
-    try:
-        from datetime import date
-        today_results = MatkaResult.query.filter_by(date=date.today()).all()
-        
-        return jsonify({
-            'results': [result.to_dict() for result in today_results]
-        }), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+# Create database tables and demo user on startup
+with app.app_context():
+    db.create_all()
+    # Create demo user if not exists
+    if not User.query.filter_by(username='demo').first():
+        demo_user = User(username='demo', email='demo@example.com')
+        demo_user.set_password('demo123')
+        db.session.add(demo_user)
+        db.session.commit()
+        print("Demo user created successfully")
 
 if __name__ == '__main__':
     with app.app_context():
