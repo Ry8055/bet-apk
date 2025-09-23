@@ -339,6 +339,19 @@ def get_matka_results(market_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/matka/results', methods=['GET'])
+def get_matka_results_today():
+    try:
+        from datetime import date
+        today_results = MatkaResult.query.filter_by(date=date.today()).all()
+        
+        return jsonify({
+            'results': [result.to_dict() for result in today_results]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/matka/declare_result', methods=['POST'])
 def declare_matka_result():
     try:
@@ -483,6 +496,25 @@ def get_profile():
         
         return jsonify({'user': user.to_dict()}), 200
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/matka/live-data', methods=['GET'])
+def get_live_data():
+    try:
+        import random
+        live_data = {
+            'timestamp': datetime.now().isoformat(),
+            'totalBetsToday': random.randint(50000, 100000),
+            'activeBetting': random.randint(500, 1500),
+            'lastUpdate': datetime.now().isoformat(),
+            'hotMarkets': [
+                {'name': 'KALYAN', 'players': random.randint(2000, 3000), 'trend': 'up'},
+                {'name': 'MILAN NIGHT', 'players': random.randint(2500, 4000), 'trend': 'up'},
+                {'name': 'RAJDHANI NIGHT', 'players': random.randint(2000, 3500), 'trend': 'stable'}
+            ]
+        }
+        return jsonify(live_data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
