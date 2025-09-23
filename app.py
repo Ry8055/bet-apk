@@ -254,6 +254,7 @@ def dashboard():
 # Matka API Routes
 @app.route('/api/matka/markets', methods=['GET'])
 def get_matka_markets():
+    # This endpoint is now public - no authentication required
     try:
         markets = MatkaMarket.query.filter_by(is_active=True).all()
         return jsonify({
